@@ -14,7 +14,7 @@ Goals:
 
 # Usage
 
-First we need to build the SDK container (where we compile the Node) and the Runtime container (where it will run)
+First we need to build the SDK container image (where we compile the Node) and then the Runtime container image (where it will run)
 
 To build the SDK container move to the folder:
 
@@ -28,18 +28,18 @@ Now to build the runtime move to the folder:
 
 `cd ../runtime_container`
 
-And the run the build command
+And then run the build command
 
 `docker build -t neo-sharp:0.1_runtime .`
 
-Now that we have the container images built we need to run each in sequence.
+Now that we have the container images built, we need to run each in sequence.
 First will be the SDK container, because it will create a shared folder and compile the Node there.
 
 `docker run -it -v neo-sharp-builds:/neo-sharp-builds --name neo-sharp-sdk neo-sharp:0.1_sdk`
 
 last command will compile the Application and exit to prompt (if no errors exceptions) and then You should start the App running the runtime container.
 
-`docker run -it -v neo-sharp-builds:/neo-sharp-builds neo-sharp:0.1_runtime`
+`docker run -it -v neo-sharp-builds:/neo-sharp-builds --name neo-sharp-runtime neo-sharp:0.1_runtime`
 
 Last command will give You neo-sharp console. All done ;)
 
