@@ -1,17 +1,17 @@
+# use official Microsoft dotnet container
 FROM microsoft/dotnet:latest
 
-#RUN apt-get update && \
-#    apt-get install -y libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev && \
-#    rm -rf /var/lib/apt/lists/* && \
-RUN    mkdir /repo && \
+# create folders structure and clone neo-sharp repo
+RUN mkdir /repo && \
     mkdir /neo-sharp-builds && \
     cd /repo && \
     git clone --recursive https://github.com/CityOfZion/neo-sharp.git  
-#    cd neo-sharp/src/NeoSharp.Application && \
-#    dotnet publish --configuration Release --output /neo-sharp-builds
 
+# create docker volume to share to other containers
 VOLUME neo-sharp-builds
 
+# workdir
 WORKDIR /repo/neo-sharp/src/NeoSharp.Application
 
+# the command to build and publish the app when container runs
 ENTRYPOINT ["/usr/bin/dotnet", "publish", "--configuration", "Release", "--output", "/neo-sharp-builds"]
