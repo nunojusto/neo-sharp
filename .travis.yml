@@ -1,23 +1,19 @@
-language: csharp
-os:
-- linux
-dist: trusty
-dotnet: 2.1.300
-mono: none
 sudo: required
+
+language: ruby
+
 services:
-- docker
+  - docker
+
+env:
+  - REPO=cryptotuga/neo-sharp
+
 before_install:
-- docker build --target builder -t cryptotuga/neo-sharp:SDK ./containers/
-- docker build -t cryptotuga/neo-sharp:latest ./containers/
-script:
-- dotnet restore
-- find test -name *.csproj | xargs -I % dotnet add % package coverlet.msbuild
-- dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+  - docker build --target builder -t $REPO:SDK ./containers/
+  - docker run docker run -p 8000:8000 -it --rm --name neo-sharp-SDK "cd /repo/neo-sharp;find test -name *.csproj | xargs -I % dotnet add % package coverlet.msbuild;dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover"
+  - docker build -t $REPO:latest ./containers/
 after_success:
-- bash <(curl -s https://codecov.io/bash) -v
-- docker login -u $DOCKER_USER -p $DOCKER_PASS
-- export REPO=cryptotuga/neo-sharp
-- docker push cryptotuga/neo-sharp:SDK
-- docker push $REPO
-- docker push -t $REPO:runtime $REPO
+  - docker exec neo-sharp-SDK "/bin/bash <(curl -s https://codecov.io/bash) -v"
+  - docker login -u $DOCKER_USER -p $DOCKER_PASS
+  - docker push $REPO:SDK
+  - docker push $REPO
