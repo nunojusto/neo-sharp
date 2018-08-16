@@ -8,6 +8,7 @@ sudo: required
 services:
 - docker
 before_install:
+- docker build --target build -t cryptotuga/neo-sharp:SDK ./containers/
 - docker build -t cryptotuga/neo-sharp:latest ./containers/
 script:
 - dotnet restore
@@ -18,6 +19,7 @@ after_success:
 - docker login -u $DOCKER_USER -p $DOCKER_PASS
 - export REPO=cryptotuga/neo-sharp
 - docker push $REPO
+- docker push $REPO:runtime
 env:
   global:
   - secure: C7zJQroPG709QDaUoyC2jzwepSpm+j0MohMx9pRPeZLmvYYPXLRK9nL6VFi+hdVRqsXLHxin3CLFv/lMKuyQXD7mmlzap2gZTi/mZf85cd45hvqgUA1wgqD+Lct7HBLDHQ8icUkirFTSamVeoO0sGE0VI8ck5A4y4ddzCxbhIBhPhsgs+EhHwE5ITMXG8MBVH+IM3Mq5sAqQKXYwXHMYi7rPZIKghB8HANgXOcEgeB4Z4XkGngkVNzABpLbtYjAI8xDTLGqcu6QSH8ENsOa7g7VD+JytHmeb4YOPBV/hOw85Kt6dOuHnNlQTRVn3ewKqgzj5xzoea9a8b+RLPlcUUpxK5UxaC/qqGhO3WL2Cjf2KZ20WSKcrIbDQGSZak4Wf2DPZt3M12mfMr5uCMoIwMk3xU417pAxXzRVhr4jC15rhaYj8Tfp9ds0vDBrLK5XK3T/T9rUJoAbEf6hSWiq7/ZMDI+JTWNHgwlNE/Gp7gziciN/BRdrr8WxJ/v3OfM0YSmeodxp/CzuYJQYEjCiE8YNwd8opORQeow8TYg2iOoS2bLlp0NUbDJ8f2QkQSPRYgtgUURdAtTmTeVghRiOEwSSKJovZw8ujX8kb4YVRMWqhGh1+MroqHYfQxR2MolFQXW6Hx/jDRXSW9022Zld/aocgFeMhor5hpOtAH64Fp7Y=
