@@ -31,5 +31,5 @@ WORKDIR /home/neo-sharp
 
 EXPOSE 8000/tcp
 
-# first command to run when container is started will start app
-ENTRYPOINT ["/usr/bin/dotnet", "NeoSharp.Application.dll"]
+# default first command to run when container is started will start app
+CMD ["/usr/bin/dotnet", "NeoSharp.Application.dll"]
