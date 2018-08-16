@@ -8,26 +8,37 @@ namespace NeoSharp.VM.Interop.Types.StackItems
 {
     public class InteropStackItem : IInteropStackItem, INativeStackItem
     {
-        readonly int _objKey;
+        #region Private fields
+
+        private readonly int _objKey;
 
         /// <summary>
         /// Native Handle
         /// </summary>
-        IntPtr _handle;
+        private IntPtr _handle;
+
+        #endregion
+
+        #region Public fields
+
         /// <summary>
         /// Native Handle
         /// </summary>
         [JsonIgnore]
         public IntPtr Handle => _handle;
+
         /// <summary>
         /// Is Disposed
         /// </summary>
         [JsonIgnore]
         public override bool IsDisposed => _handle == IntPtr.Zero;
+
         /// <summary>
         /// Type
         /// </summary>
         public new EStackItemType Type => base.Type;
+
+        #endregion
 
         /// <summary>
         /// Constructor
@@ -52,6 +63,7 @@ namespace NeoSharp.VM.Interop.Types.StackItems
 
             _handle = this.CreateNativeItem();
         }
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -65,21 +77,15 @@ namespace NeoSharp.VM.Interop.Types.StackItems
             _handle = handle;
         }
 
-        public byte[] GetNativeByteArray()
-        {
-            return BitHelper.GetBytes(_objKey);
-        }
+        public byte[] GetNativeByteArray() => BitHelper.GetBytes(_objKey);
 
         #region IDisposable Support
 
         protected override void Dispose(bool disposing)
         {
-            lock (this)
-            {
-                if (_handle == IntPtr.Zero) return;
+            if (_handle == IntPtr.Zero) return;
 
-                NeoVM.StackItem_Free(ref _handle);
-            }
+            NeoVM.StackItem_Free(ref _handle);
         }
 
         #endregion
