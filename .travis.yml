@@ -1,25 +1,25 @@
 language: csharp
 os:
-  - linux
+- linux
 dist: trusty
 dotnet: 2.1.300
 mono: none
 sudo: required
 services:
-  - docker
+- docker
 before_install:
-  - docker build -t cybertuga/neo-sharp:latest ./containers/
+- docker build -t cryptotuga/neo-sharp:latest ./containers/
 script:
-  - dotnet restore
-  - find test -name *.csproj | xargs -I % dotnet add % package coverlet.msbuild
-  - dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+- dotnet restore
+- find test -name *.csproj | xargs -I % dotnet add % package coverlet.msbuild
+- dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
 after_success:
-  - bash <(curl -s https://codecov.io/bash) -v
-  - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-  - export REPO=cybertuga/neo-sharp
-  - docker push $REPO
+- bash <(curl -s https://codecov.io/bash) -v
+- docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+- export REPO=cryptotuga/neo-sharp
+- docker push $REPO
 env:
   global:
-    - secure: I02eSIkQgCOCdCz5q7cprLtzKmAnXTrMiUMD4P9VVsc5UGW14owv4jAIdVRLaTG/4TCr5My4pkNrmNc12I/IpXkE3nPByx0pAIVqIRBTDxWOA8AWHbovJHYHw2PyKbPthZEH+N9Has3YyS49VMmUrhOXZqC+iGQ/plzoIZZZ3RQds0QuAfag3N2rjDHaJPqXGu1O7KnEyAkESTH0cDETc5/ygHRe5vKnyQOg/9zK4lQoWU4QHzh58HNDzL2t99Jtx5vLomUJ/MCL5hKlPNAIEmv+TQsFR58DcXkuhOgCW6xEMywdgY65ItMR9YpHvnJy2q/qrH1RQTFaSjdVwgFwcqBiQFsX9jr+FOwf+Ss/Y+jCiV2BFg/+Nze4cL10wercTifockHPaSzw/y/Z2YgwJZa9yEQygM1FCW/ExNBM17zSNCkvEto14UzgpFAsDiOpuNUBwwDFBEh9awpwTY/AixYLeGTctoM0qGco9i2+tv+gap5vaHyLBLRjmQrBT99LSxxJJzDf/hKU2RgIHM70AotI8jPWHf/NxRHW09I88ZJGQPPDYW47/WHQlXDaIfZeNBE94tcJOMCzWnjHT6f+WYVoicXDXtXBwKzgpKNaNff0TWaYK//PJjIlE+NsfsFITiE2sPq3kHMcGj/SHlkk9wNCdSslqlw1YK45utIu47E=
-    - secure: Dq30BdPPzmAVMGxfEt3HZRaa6mR5Qgr1+AN3CGoGqzeDYYOny/N88tmrbQ3u0udCNNyX72jQo3D0ANC9TnImA++Do3Yz9UOHbmze227TQ4D964VT70mmV3SvtBt3SpTYE+MqiciJMssgGrmV8gvyzEvZvvChYz9vO7PpmrSJcUDLnqmOF/kb8ARTzZYsQy8oj/YyVZIbfp1GqSAowzrzuwj4FSIOoNwDPj/Fi0T6pNtHFofMuXej2NttG2FtdbfKR3qjVIpUBmlDII7p9hn1efA0vg1x9z+niDPLpZLUj37Zoo8XDIYH3SlnRUPp4OBJxgMjUGnFlEHvPzlrNRCgGKcy5r47q+7rKjP/lS11/mRZN0laprWK5Ku498VT+dMFU4FhHfL/SC29JnkRTOKx2NPOXCi3jyjQfzPTNn8AK470+wOQJnbPnsRfg+Elxin+LFdiqtKvsHcvsebOC+YxWQsu6aOfBOegmIq0bx/Y5abEfC8ECx6qzOku1ckoQN4UuJiEbgcxfAmWLGaeedW74MQdpfv8GyvS6YRkkN2P6AXHzGUdWwt1ILKylx7Pw2coBcomHfmbFiV3Fm1VUoxJ8puD3cyMfO+RbYO/ufzAbh/TbicvGZYuZOxRcKaNZFrABOb129bMpffVKC2YBG+qC3cbjeWMhGM6agXMEky4Cg0=
-    - secure: HFHPw1KxXStaUkdCH0XMMVfyua1tbtWfdOt1hhBNJ5EzopjXw9Cao7k9DROFMxklH9UMtKPJiRVCtKiI/t6Ib1KZAygmMuTQp9UfbP3IoGTje9WV4J6xBL8Q+Y3B3LWEv08XtXzeHJP5SXONygawp8suTdcBG+VaoIAvtXFq9xxJw+xAWRRZ2H3t5STmWNdR/5SVamfDUo1WWwZ/J23wxNtcjIFHvJDcunl0QYdtv/qC/tDwcDvlhu5888hXZ6XWIw3khMlHAXJEaamqgC/xhj2TFHi7EVL4pF8gZ2Le4i7vGeiPfJqs+zVBGaJDxA52d+3NypS/gOBsjM8GZslgBvI3/sfwdXAYRkyjjo132mzDFwX3UdKLeYjqEtc0ke/quMp2yFZC7SV4RsRm6hhXLVY0ZhDInyiqvJB3rksEBjAcX5CReVXiRiSAK1TL2pVsKyGnmwujmYEO+RtLS+YVRafo0AWLBr++3wjysyV151WZauvt/oI1GGC3ZFRNJHqZIM6mDEp5jU1+6CTRPYjpmRa4RH1eTsbj4w3O2fDhVNZMfJ+mrSrdpTHTEzgTt8V0IVic0adFYAsYbf7LSsTIuQqO5Z4MD6WSTR5lE+h0nisHpDijG/3EOwlZUMYtmN/4BCQwSlSM7u0IonAu4iQsSGXqjs+R200OyO5kM1vF4fU=
+  - secure: Ty3L8cdpGfh4oyIB6Z4Fr3mTqZrXaSoh/sqVi1z7pkoaD9OkjvZMZX1GSuP35IVolWQ/71RJjL1qTdL8KbDMarkFAQfbrfXR5o/rc/wnhyaSGK9ixPMtbmkvCKsv7DPVf1BGcdIKNUB1/uC/Du+iJEtyexecTV6hjq9TRtI1kjy9A5zYJ+37jNSxTM9PURGuLf3I0wtDyjhyq0ODaXMjsAoUoDNJAnO0Dv4EJc9+G1XjbZfYxxZgm4jjVo5rLFIkxxFHbZ2loyft0uneW+G5kjwZHfV1yH7mdDO2jQ6awkbMe7pRCfQkW7N+XvGj9IQpMLyK0IZuim1Gouvy/Pz5jLJoxxzKXiHc11Hvp1/lD41PciHEdCR1wpReu57+g8qVTZmdwLYDATizkFpVet/NEmo+2wqAMlFO7cZpyMe+rmpM6eYBftPnxn03mVV2gUzO7zaOykYUpXWnESkUxX/JPBGNAqw8TmWQW0Ob444KKRZKadLJLcZsJVSqADO0XNrPXTA3VY1xdGU6H5ay2ib8eQKupSaiiPUuKv2oQHka0iKTynh0yODEeshhtRqwxHbJ+0fNverb648GbQkve8hmO+XE6N+2Y9pdwD5/Egh5o5Pz8vqgFs8rDnOER+t1IvPaPl3xj3K6vXyn6AB+CuRog74YxEXuRdN93CBnQRg+/AQ=
+  - secure: BdD0TbmtAU1GqjYh1KRtJz+B4c4EkZvV3ef6rJJLHlX56HU7LLM2vhOhZ+q/UsizYVy2VuGAWiJjprp3QP1QxucA1YjkdQejoVrGkhnlUWoO8wWP08tfifDogOxX+U+vnNwHCCNqeLB5bcv2MP/GRARf+L0tjZeskU+3CohD2qcpongnkVLxneokT5cV/RxeBNDbNNwqej/u31G0Ys0iitwkydTjCLUl+ENbM51ZoZBblirux8SqMklCwujOMUQmks0XM1vJOyebdOoyRh0+SlMvIPt3r0RlM+DbCQgGIS+sYs2Hwmwy1ATAFijCG48SFZGprHYyXBYv+LipfvEWIEpECJT+uLExtCMMavqeld/JyH4Z66Asq+GBMRG5DtEle3uKqC/0O024ogibwo1XdQ+3pRT2wJsqo4I1biUP71MFyKHZkPvqhVLnGuJZ3rzsSNl+CvIMFQA6GnmFaw395koR+leIp6LqPae2P38iOMp6aXPm+quoQfPrTYGBBDqVBECW4iSVSm2cx7RBljwAVwDW07Doi9G0jTM675JlceXJAaDioS3QK8JhPHTbx5IKhaD0Qg6ah74OINXnJhPthVt1tVTsU1x6Suj7sWWU/1LtVINtavA/n3GGaubq5hVN9OssO9ttzggrZXaFEUxRmaLYfKolZUqulriVUZLGf2s=
+  - secure: A80m/c1s6EmZ37k2FspHzdu3CD6gO8/95nitx8uYQH/bUQeNhIcPWowRP6iWUWuAukB7FKDWEZxgNN2Td5WruDljMtcezg1FreiIUWD6Ls/QfXx3ievF7m9shvlsES+s1pX91GllM7Kb2Te8FXbgt2gvhqoCnI7ItEwRWlaVGwal80O8JxvYCAbvx+yfADkp29WUG7f7y4mzchNt4J/jLAAc9UKUPWH1+qH4tWReuUvN3QRrPnsurURq7coC1r7lmwVuY1SAF48q83OvurRocAxkCO306iP6VjjsfyVRj1UyIsWe0yyChGEKt5v6/vIXH0/80Lv+8I5SwCqA7FSS+zx1C/+PzfYpSXsP7aLy3ArLwLnrM3rpZTscY1+7rCm6a8N47FZKbMU2Wj1PaGaOFjEy7f4rG+lgwNOIMwQhiasX3uKm/fqUdAJfvfM9sOAApaRiILVj/NBcYv2ngeeUd5C3SZIV2rFET5RRBVuNWd29k8wCP6WGxyErpbn6BDtbeJE/sdg5z1GUC2KW3h8o77aIK+PzIPDKvcFrj+TVDOqTDpCroLJHGCILW9BLifFM5bOVYilqXISouI4JUp/Fc/1wFdiyPY1qNYSdCgNG9iCnTKWo8j0Te9+I4Oo/o5CJmnFUUzsyMqrua8K4RlIcvxlb7EFM1XJ6Zljg/wrwPJ0=
