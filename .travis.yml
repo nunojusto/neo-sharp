@@ -9,17 +9,15 @@ services:
   - docker
 before_install:
   - docker build -t cybertuga/neo-sharp:latest ./containers/
-  - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-  - export REPO=cybertuga/neo-sharp
-  - docker push $REPO
 script:
   - dotnet restore
   - find test -name *.csproj | xargs -I % dotnet add % package coverlet.msbuild
   - dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
 after_success:
   - bash <(curl -s https://codecov.io/bash) -v
-  - 
-  - docker push cybertuga/neo-sharp:latest
+  - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+  - export REPO=cybertuga/neo-sharp
+  - docker push $REPO
 env:
   global:
     - secure: I02eSIkQgCOCdCz5q7cprLtzKmAnXTrMiUMD4P9VVsc5UGW14owv4jAIdVRLaTG/4TCr5My4pkNrmNc12I/IpXkE3nPByx0pAIVqIRBTDxWOA8AWHbovJHYHw2PyKbPthZEH+N9Has3YyS49VMmUrhOXZqC+iGQ/plzoIZZZ3RQds0QuAfag3N2rjDHaJPqXGu1O7KnEyAkESTH0cDETc5/ygHRe5vKnyQOg/9zK4lQoWU4QHzh58HNDzL2t99Jtx5vLomUJ/MCL5hKlPNAIEmv+TQsFR58DcXkuhOgCW6xEMywdgY65ItMR9YpHvnJy2q/qrH1RQTFaSjdVwgFwcqBiQFsX9jr+FOwf+Ss/Y+jCiV2BFg/+Nze4cL10wercTifockHPaSzw/y/Z2YgwJZa9yEQygM1FCW/ExNBM17zSNCkvEto14UzgpFAsDiOpuNUBwwDFBEh9awpwTY/AixYLeGTctoM0qGco9i2+tv+gap5vaHyLBLRjmQrBT99LSxxJJzDf/hKU2RgIHM70AotI8jPWHf/NxRHW09I88ZJGQPPDYW47/WHQlXDaIfZeNBE94tcJOMCzWnjHT6f+WYVoicXDXtXBwKzgpKNaNff0TWaYK//PJjIlE+NsfsFITiE2sPq3kHMcGj/SHlkk9wNCdSslqlw1YK45utIu47E=
