@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -10,29 +10,47 @@ namespace NeoSharp.VM.Interop.Types
 {
     public unsafe class ExecutionEngine : IExecutionEngine
     {
-        #region Delegates
+        #region Private fields
+        
+        // This delegates are required for native calls, 
+        // otherwise is disposed and produce a memory error
 
-        readonly NeoVM.OnStepIntoCallback _InternalOnStepInto;
-        readonly NeoVM.OnStackChangeCallback _InternalOnExecutionContextChange;
-        readonly NeoVM.OnStackChangeCallback _InternalOnResultStackChange;
+        private readonly NeoVM.OnStepIntoCallback _InternalOnStepInto;
+        private readonly NeoVM.OnStackChangeCallback _InternalOnExecutionContextChange;
+        private readonly NeoVM.OnStackChangeCallback _InternalOnResultStackChange;
 
-        readonly NeoVM.InvokeInteropCallback _InternalInvokeInterop;
-        readonly NeoVM.LoadScriptCallback _InternalLoadScript;
-        readonly NeoVM.GetMessageCallback _InternalGetMessage;
-
-        #endregion
+        private readonly NeoVM.InvokeInteropCallback _InternalInvokeInterop;
+        private readonly NeoVM.LoadScriptCallback _InternalLoadScript;
+        private readonly NeoVM.GetMessageCallback _InternalGetMessage;
 
         /// <summary>
         /// Native handle
         /// </summary>
-        IntPtr Handle;
+        private IntPtr Handle;
+
         /// <summary>
         /// Last message
         /// </summary>
-        byte[] LastMessage;
+        private byte[] LastMessage;
 
-        readonly IStackItemsStack _ResultStack;
-        readonly IStack<IExecutionContext> _InvocationStack;
+        /// <summary>
+        /// Result stack
+        /// </summary>
+        private readonly IStackItemsStack _ResultStack;
+
+        /// <summary>
+        /// Invocation stack
+        /// </summary>
+        private readonly IStack<IExecutionContext> _InvocationStack;
+
+        /// <summary>
+        /// Interop Cache
+        /// </summary>
+        internal readonly List<object> InteropCache;
+
+        #endregion
+
+        #region Public fields
 
         /// <summary>
         /// Is Disposed
@@ -43,23 +61,23 @@ namespace NeoSharp.VM.Interop.Types
         /// Invocation Stack
         /// </summary>
         public override IStack<IExecutionContext> InvocationStack => _InvocationStack;
+
         /// <summary>
         /// Result Stack
         /// </summary>
         public override IStackItemsStack ResultStack => _ResultStack;
+
         /// <summary>
         /// Virtual Machine State
         /// </summary>
         public override EVMState State => (EVMState)NeoVM.ExecutionEngine_GetState(Handle);
+
         /// <summary>
         /// Consumed Gas
         /// </summary>
         public override ulong ConsumedGas => NeoVM.ExecutionEngine_GetConsumedGas(Handle);
 
-        /// <summary>
-        /// Interop Cache
-        /// </summary>
-        internal readonly List<object> InteropCache;
+        #endregion
 
         /// <summary>
         /// Constructor
@@ -67,10 +85,11 @@ namespace NeoSharp.VM.Interop.Types
         /// <param name="e">Arguments</param>
         public ExecutionEngine(ExecutionEngineArgs e) : base(e)
         {
+            InteropCache = new List<object>();
+
             _InternalInvokeInterop = new NeoVM.InvokeInteropCallback(InternalInvokeInterop);
             _InternalLoadScript = new NeoVM.LoadScriptCallback(InternalLoadScript);
             _InternalGetMessage = new NeoVM.GetMessageCallback(InternalGetMessage);
-            InteropCache = new List<object>();
 
             Handle = NeoVM.ExecutionEngine_Create
                 (
@@ -78,8 +97,7 @@ namespace NeoSharp.VM.Interop.Types
                 out IntPtr invHandle, out IntPtr resHandle
                 );
 
-            if (Handle == IntPtr.Zero)
-                throw (new ExternalException());
+            if (Handle == IntPtr.Zero) throw new ExternalException();
 
             _InvocationStack = new ExecutionContextStack(this, invHandle);
             _ResultStack = new StackItemStack(this, resHandle);
@@ -113,8 +131,11 @@ namespace NeoSharp.VM.Interop.Types
         void InternalOnStepInto(IntPtr it)
         {
             using (var context = new ExecutionContext(this, it))
+            {
                 Logger.RaiseOnStepInto(context);
+            }
         }
+
         /// <summary>
         /// Internal callback for OnExecutionContextChange
         /// </summary>
@@ -124,8 +145,11 @@ namespace NeoSharp.VM.Interop.Types
         void InternalOnExecutionContextChange(IntPtr it, int index, byte operation)
         {
             using (var context = new ExecutionContext(this, it))
-                Logger.RaiseOnExecutionContextChange(InvocationStack, context, index, (ELogStackOperation)operation);
+            {
+                Logger.RaiseOnExecutionContextChange(_InvocationStack, context, index, (ELogStackOperation)operation);
+            }
         }
+
         /// <summary>
         /// Internal callback for OnResultStackChange
         /// </summary>
@@ -135,8 +159,11 @@ namespace NeoSharp.VM.Interop.Types
         void InternalOnResultStackChange(IntPtr item, int index, byte operation)
         {
             using (var it = this.ConvertFromNative(item))
-                Logger.RaiseOnResultStackChange(ResultStack, it, index, (ELogStackOperation)operation);
+            {
+                Logger.RaiseOnResultStackChange(_ResultStack, it, index, (ELogStackOperation)operation);
+            }
         }
+
         /// <summary>
         /// Get message callback
         /// </summary>
@@ -148,7 +175,7 @@ namespace NeoSharp.VM.Interop.Types
             {
                 // TODO: should change this, too dangerous
 
-                byte[] script = MessageProvider.GetMessage(iteration);
+                var script = MessageProvider.GetMessage(iteration);
 
                 if (script != null && script.Length > 0)
                 {
@@ -168,6 +195,7 @@ namespace NeoSharp.VM.Interop.Types
             output = IntPtr.Zero;
             return 0;
         }
+
         /// <summary>
         /// Load script callback
         /// </summary>
@@ -182,7 +210,7 @@ namespace NeoSharp.VM.Interop.Types
                 return NeoVM.FALSE;
             }
 
-            byte[] script = ScriptTable.GetScript(scriptHash, isDynamicInvoke == NeoVM.TRUE);
+            var script = ScriptTable.GetScript(scriptHash, isDynamicInvoke == NeoVM.TRUE);
 
             if (script == null || script.Length <= 0)
             {
@@ -196,6 +224,7 @@ namespace NeoSharp.VM.Interop.Types
 
             return NeoVM.TRUE;
         }
+
         /// <summary>
         /// Invoke Interop callback
         /// </summary>
@@ -205,14 +234,18 @@ namespace NeoSharp.VM.Interop.Types
         byte InternalInvokeInterop(IntPtr ptr, byte size)
         {
             if (InteropService == null)
+            {
                 return NeoVM.FALSE;
+            }
 
-            string method = Marshal.PtrToStringUTF8(ptr, size);
+            var method = Marshal.PtrToStringUTF8(ptr, size);
 
             try
             {
                 if (InteropService.Invoke(method, this))
+                {
                     return NeoVM.TRUE;
+                }
             }
             catch
             {
@@ -259,6 +292,7 @@ namespace NeoSharp.VM.Interop.Types
         {
             NeoVM.ExecutionEngine_Clean(Handle, iteration);
         }
+
         /// <summary>
         /// Execute
         /// </summary>
@@ -268,6 +302,7 @@ namespace NeoSharp.VM.Interop.Types
 
             return NeoVM.ExecutionEngine_Execute(Handle) == NeoVM.TRUE;
         }
+
         /// <summary>
         /// Execute until
         /// </summary>
@@ -278,6 +313,7 @@ namespace NeoSharp.VM.Interop.Types
 
             return NeoVM.ExecutionEngine_ExecuteUntil(Handle, gas) == NeoVM.TRUE;
         }
+
         /// <summary>
         /// Step Into
         /// </summary>
@@ -289,6 +325,7 @@ namespace NeoSharp.VM.Interop.Types
                 NeoVM.ExecutionEngine_StepInto(Handle);
             }
         }
+
         /// <summary>
         /// Step Out
         /// </summary>
@@ -296,6 +333,7 @@ namespace NeoSharp.VM.Interop.Types
         {
             NeoVM.ExecutionEngine_StepOut(Handle);
         }
+
         /// <summary>
         /// Step Over
         /// </summary>
@@ -315,6 +353,7 @@ namespace NeoSharp.VM.Interop.Types
         {
             return new MapStackItem(this);
         }
+
         /// <summary>
         /// Create Array StackItem
         /// </summary>
@@ -323,6 +362,7 @@ namespace NeoSharp.VM.Interop.Types
         {
             return new ArrayStackItem(this, items, false);
         }
+
         /// <summary>
         /// Create Struct StackItem
         /// </summary>
@@ -331,6 +371,7 @@ namespace NeoSharp.VM.Interop.Types
         {
             return new ArrayStackItem(this, items, true);
         }
+
         /// <summary>
         /// Create ByteArrayStackItem
         /// </summary>
@@ -339,6 +380,7 @@ namespace NeoSharp.VM.Interop.Types
         {
             return new ByteArrayStackItem(this, data);
         }
+
         /// <summary>
         /// Create InteropStackItem
         /// </summary>
@@ -347,6 +389,7 @@ namespace NeoSharp.VM.Interop.Types
         {
             return new InteropStackItem(this, obj);
         }
+
         /// <summary>
         /// Create BooleanStackItem
         /// </summary>
@@ -355,6 +398,7 @@ namespace NeoSharp.VM.Interop.Types
         {
             return new BooleanStackItem(this, value);
         }
+
         /// <summary>
         /// Create IntegerStackItem
         /// </summary>
@@ -363,6 +407,7 @@ namespace NeoSharp.VM.Interop.Types
         {
             return new IntegerStackItem(this, value);
         }
+
         /// <summary>
         /// Create IntegerStackItem
         /// </summary>
@@ -371,6 +416,7 @@ namespace NeoSharp.VM.Interop.Types
         {
             return new IntegerStackItem(this, value);
         }
+
         /// <summary>
         /// Create IntegerStackItem
         /// </summary>
@@ -379,6 +425,7 @@ namespace NeoSharp.VM.Interop.Types
         {
             return new IntegerStackItem(this, value);
         }
+
         /// <summary>
         /// Create IntegerStackItem
         /// </summary>
@@ -413,7 +460,9 @@ namespace NeoSharp.VM.Interop.Types
 
             // free unmanaged resources (unmanaged objects) and override a finalizer below. set large fields to null.
 
-            ResultStack.Dispose();
+            _ResultStack.Dispose();
+            _InvocationStack.Dispose();
+
             NeoVM.ExecutionEngine_Free(ref Handle);
         }
 
