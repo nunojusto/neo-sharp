@@ -5,6 +5,14 @@ dist: trusty
 dotnet: 2.1.300
 mono: none
 
+sudo: required
+  
+services:
+  - docker
+
+before_install:
+  - docker build -t cybertuga/neo-sharp:latest /containers/.
+
 script:
 
 # let's do the restore. 
