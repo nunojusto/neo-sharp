@@ -10,7 +10,7 @@ env:
 
 before_install:
   - docker build --target builder -t $REPO:SDK ./containers/
-  - docker run -p 8000:8000 -it --rm --name neo-sharp-SDK $REPO:SDK "cd /repo/neo-sharp;find test -name *.csproj | xargs -I % dotnet add % package coverlet.msbuild;dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover"
+  - docker run -p 8000:8000 -it --rm --name neo-sharp-SDK $REPO:SDK cd /repo/neo-sharp;find test -name *.csproj | xargs -I % dotnet add % package coverlet.msbuild;dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
   - docker build -t $REPO:latest ./containers/
 after_success:
   - docker exec neo-sharp-SDK "/bin/bash <(curl -s https://codecov.io/bash) -v"
