@@ -6,6 +6,7 @@ services:
 env:
   # official docker hub registry
   - REPO=cryptotuga/neo-sharp
+  - all_branches=true
 
 install:
   # build SDK image
@@ -24,17 +25,14 @@ deploy:
   - provider: script
     script: bash "docker login -u $DOCKER_USER -p $DOCKER_PASS"
     on:
-      tags: true
-      all_branches: true
+      branch: true
   # deploy SDK image
   - provider: script
     script: bash "docker push $REPO:SDK"
     on:
-      tags: true
       all_branches: true
   # deploy runtime (latest) image
   - provider: script
     script: bash "docker push $REPO"
     on:
-      tags: true
       all_branches: true
