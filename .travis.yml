@@ -22,16 +22,16 @@ after_success:
 deploy:
   # login to docker hub
   - provider: script
-    script: bash "docker login -u $DOCKER_USER -p $DOCKER_PASS"
+    script: bash -c "docker login -u $DOCKER_USER -p $DOCKER_PASS"
     on:
       all_branches: true
   # deploy SDK image
   - provider: script
-    script: bash "docker push $REPO:SDK"
+    script: bash -c "docker push $REPO:SDK"
     on:
       all_branches: true
   # deploy runtime (latest) image
   - provider: script
-    script: bash "docker push $REPO"
+    script: bash -c "docker push $REPO"
     on:
       all_branches: true
