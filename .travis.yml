@@ -22,7 +22,7 @@ after_success:
 deploy:
   # login to docker hub
   - provider: script
-    script: bash -c "docker login -u $DOCKER_USER -p $DOCKER_PASS"
+    script: bash -c "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
     on:
       all_branches: true
   # deploy all container images created -> SDK and runtime (latest)
