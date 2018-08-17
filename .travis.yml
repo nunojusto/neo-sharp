@@ -25,12 +25,7 @@ deploy:
     script: bash -c "docker login -u $DOCKER_USER -p $DOCKER_PASS"
     on:
       all_branches: true
-  # deploy SDK image
-  - provider: script
-    script: bash -c "docker push $REPO:SDK"
-    on:
-      all_branches: true
-  # deploy runtime (latest) image
+  # deploy all container images created -> SDK and runtime (latest)
   - provider: script
     script: bash -c "docker push $REPO"
     on:
