@@ -13,11 +13,17 @@ install:
   - docker build --target builder -t $REPO:SDK ./containers/
 
 script:
-  - docker run -p 8000:8000 -it --rm --name neo-sharp-SDK $REPO:SDK bash -c "cd /repo/neo-sharp && find test -name *.csproj | xargs -I % dotnet add % package coverlet.msbuild && dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover"
+  - docker run -p 8000:8000 -it --rm --name neo-sharp-SDK $REPO:SDK bash -c "cd /repo/neo-sharp && find test -name *.csproj | xargs -I % dotnet add % package coverlet.msbuild && dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover && /bin/bash <(curl -s https://codecov.io/bash) -v"
 
 after_success:
-  - docker exec neo-sharp-SDK "/bin/bash <(curl -s https://codecov.io/bash) -v"
   - docker build -t $REPO:latest ./containers/
-  - docker login -u $DOCKER_USER -p $DOCKER_PASS
-  - docker push $REPO:SDK
-  - docker push $REPO
+
+deploy:
+  - provider: script
+    script: bash "docker login -u $DOCKER_USER -p $DOCKER_PASS"
+  
+  - provider: script
+    script: bash "docker push $REPO:SDK"
+
+  - provider: script
+    script: bash "docker push $REPO"
