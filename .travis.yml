@@ -5,7 +5,7 @@ services:
 
 env:
   # official docker hub registry
-  - REPO=cryptotuga/neo-sharp
+  - REPO=cityofzion/neo-sharp
 
 install:
   # build SDK image
