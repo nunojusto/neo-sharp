@@ -4,26 +4,37 @@ services:
   - docker
 
 env:
+  # official docker hub registry
   - REPO=cryptotuga/neo-sharp
 
-before_install:
-  - docker --version
-
 install:
+  # build SDK image
   - docker build --target builder -t $REPO:SDK ./containers/
 
 script:
+  # run tests
   - docker run -p 8000:8000 -it --rm --name neo-sharp-SDK $REPO:SDK bash -c "cd /repo/neo-sharp && find test -name *.csproj | xargs -I % dotnet add % package coverlet.msbuild && dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover && /bin/bash <(curl -s https://codecov.io/bash) -v"
 
 after_success:
+  # if tests ok build runtime image
   - docker build -t $REPO:latest ./containers/
 
 deploy:
+  # login to docker hub
   - provider: script
     script: bash "docker login -u $DOCKER_USER -p $DOCKER_PASS"
-  
+    on:
+      tags: true
+      all_branches: true
+  # deploy SDK image
   - provider: script
     script: bash "docker push $REPO:SDK"
-
+    on:
+      tags: true
+      all_branches: true
+  # deploy runtime (latest) image
   - provider: script
     script: bash "docker push $REPO"
+    on:
+      tags: true
+      all_branches: true
