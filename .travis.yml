@@ -5,7 +5,8 @@ services:
 
 env:
   # official docker hub registry
-  - REPO=cityofzion/neo-sharp
+  # Commented here but needs to be placed in the Travis Repository Settings as an environment variable
+  # REPO=cityofzion/neo-sharp
 
 install:
   # build SDK image
