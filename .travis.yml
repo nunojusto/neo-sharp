@@ -26,10 +26,10 @@ deploy:
     script: bash -c "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
     on:
       all_branches: true
-      condition: REPO=cityofzion/neo-sharp
+      condition: $REPO=cityofzion/neo-sharp
   # deploy all container images created -> SDK and runtime (latest)
   - provider: script
     script: bash -c "docker push cityofzion/neo-sharp"
     on:
       all_branches: true
-      condition: REPO=cityofzion/neo-sharp
+      condition: $REPO=cityofzion/neo-sharp
