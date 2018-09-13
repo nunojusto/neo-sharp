@@ -1,19 +1,19 @@
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using NeoSharp.Core.Blockchain.Processors;
+using NeoSharp.Core.Blockchain.Processing;
 using NeoSharp.Core.Cryptography;
 using NeoSharp.Core.Models;
 using NeoSharp.Core.Persistence;
 using NeoSharp.TestHelpers;
 
-namespace NeoSharp.Core.Test.Blockchain.Processors
+namespace NeoSharp.Core.Test.Blockchain.Processing
 {
     [TestClass]
-    public class UtEnrollmentTransactionProcessor : TestBase
+    public class UtEnrollmentTransactionPersister : TestBase
     {
         [TestMethod]
-        public async Task Process_SetValidatorRegisteredToTrue()
+        public async Task Persist_SetValidatorRegisteredToTrue()
         {
             var pubKey = new byte[33];
             pubKey[0] = 0x02;
@@ -27,9 +27,9 @@ namespace NeoSharp.Core.Test.Blockchain.Processors
             };
             var repositoryMock = AutoMockContainer.GetMock<IRepository>();
             repositoryMock.Setup(m => m.GetValidator(input.PublicKey)).ReturnsAsync(validator);
-            var testee = AutoMockContainer.Create<EnrollmentTransactionProcessor>();
+            var testee = AutoMockContainer.Create<EnrollmentTransactionPersister>();
 
-            await testee.Process(input);
+            await testee.Persist(input);
 
             repositoryMock.Verify(m => m.AddValidator(It.Is<Validator>(v => v == validator && v.Registered)));
         }

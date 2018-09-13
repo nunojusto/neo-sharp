@@ -1,20 +1,20 @@
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using NeoSharp.Core.Blockchain.Processors;
+using NeoSharp.Core.Blockchain.Processing;
 using NeoSharp.Core.Extensions;
 using NeoSharp.Core.Models;
 using NeoSharp.Core.Persistence;
 using NeoSharp.Core.SmartContract;
 using NeoSharp.TestHelpers;
 
-namespace NeoSharp.Core.Test.Blockchain.Processors
+namespace NeoSharp.Core.Test.Blockchain.Processing
 {
     [TestClass]
-    public class UtPublishTransactionProcessor : TestBase
+    public class UtPublishTransactionPersiter : TestBase
     {
         [TestMethod]
-        public async Task Process_AddContract()
+        public async Task Persist_AddContract()
         {
             var input = new PublishTransaction
             {
@@ -28,9 +28,9 @@ namespace NeoSharp.Core.Test.Blockchain.Processors
                 Email = RandomString(10)
             };
             var repositoryMock = AutoMockContainer.GetMock<IRepository>();
-            var testee = AutoMockContainer.Create<PublishTransactionProcessor>();
+            var testee = AutoMockContainer.Create<PublishTransactionPersister>();
 
-            await testee.Process(input);
+            await testee.Persist(input);
             repositoryMock.Verify(m => m.AddContract(It.Is<Contract>(c =>
                 c.Code != null &&
                 c.Code.ScriptHash.Equals(input.Script.ToScriptHash()) &&
