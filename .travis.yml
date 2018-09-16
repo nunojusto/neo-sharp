@@ -19,7 +19,7 @@ script:
   - find test -name *.csproj | xargs -I % dotnet add % package coverlet.msbuild
   - dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
   - docker run -p 8000:8000 -d --rm --name neo-sharp-node cityofzion/neo-sharp:latest
-  - bash -c "sleep 10;if [ $(docker inspect -f '{{.State.Stopped}}' neo-sharp-node) = 'true' ]; then exit 0; else exit 1; fi"
+  - bash -c "sleep 10;if [ $(docker inspect -f '{{.State.Running}}' neo-sharp-node) = 'true' ]; then exit 0; else exit 1; fi"
 
 after_success:
   # if tests ok publish CodeDev report
