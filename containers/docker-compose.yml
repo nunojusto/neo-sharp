@@ -67,4 +67,3 @@ services:
     depends_on:
       - neo-scan
       - neo-faucet
-
