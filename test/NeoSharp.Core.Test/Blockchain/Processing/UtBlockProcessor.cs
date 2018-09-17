@@ -9,6 +9,7 @@ using NeoSharp.Core.Blockchain.Processing;
 using NeoSharp.Core.Extensions;
 using NeoSharp.Core.Helpers;
 using NeoSharp.Core.Models;
+using NeoSharp.Core.Models.OperationManger;
 using NeoSharp.Core.Persistence;
 using NeoSharp.Core.Types;
 using NeoSharp.TestHelpers;
@@ -48,10 +49,10 @@ namespace NeoSharp.Core.Test.Blockchain.Processing
         {
             var block = new Block();
 
-            var blockPoolMock = this.AutoMockContainer.GetMock<IBlockPool>();
-            blockPoolMock
-                .Setup(x => x.Contains(block.Hash))
-                .Returns(true);
+            this.AutoMockContainer
+                .GetMock<IBlockOperationsManager>()
+                .Setup(x => x.Sign(block))
+                .Callback<Block>(x => x.Hash = null);
 
             var testee = this.AutoMockContainer.Create<BlockProcessor>();
 
@@ -62,10 +63,12 @@ namespace NeoSharp.Core.Test.Blockchain.Processing
         [ExpectedException(typeof(ArgumentException))]
         public async Task AddBlock_BlockHashIsZero_ThrowArgumentException()
         {
-            var block = new Block
-            {
-                Hash = UInt256.Zero
-            };
+            var block = new Block();
+
+            this.AutoMockContainer
+                .GetMock<IBlockOperationsManager>()
+                .Setup(x => x.Sign(block))
+                .Callback<Block>(x => x.Hash = UInt256.Zero);
 
             var testee = this.AutoMockContainer.Create<BlockProcessor>();
 
@@ -118,7 +121,7 @@ namespace NeoSharp.Core.Test.Blockchain.Processing
                 }
             };
 
-            var expectedBlockHeader = new BlockHeader(BlockHeader.HeaderType.Extended);
+            var expectedBlockHeader = new BlockHeader(HeaderType.Extended);
 
             var blockPoolMock = this.AutoMockContainer.GetMock<IBlockPool>();
             blockPoolMock
@@ -152,7 +155,7 @@ namespace NeoSharp.Core.Test.Blockchain.Processing
                 }
             };
 
-            var expectedBlockHeader = new BlockHeader(BlockHeader.HeaderType.Header) { Hash = block.Hash };
+            var expectedBlockHeader = new BlockHeader(HeaderType.Header) { Hash = block.Hash };
 
             var blockPoolMock = this.AutoMockContainer.GetMock<IBlockPool>();
             blockPoolMock
@@ -291,6 +294,35 @@ namespace NeoSharp.Core.Test.Blockchain.Processing
             testee.Dispose();
 
             asyncDelayerMock.Verify(x => x.Delay(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()));
+        }
+
+        [TestMethod]
+        public void Run_NullBlock_TryToGetBlockWithIndexZERO()
+        {
+            const uint expectedIndexOfBlockToRetrieveFromBlockPool = 0;
+            var waitForDelayForToGetNextBlock = new AutoResetEvent(false);
+
+            Block nullBlock = null;
+
+            var blockPoolMock = this.AutoMockContainer.GetMock<IBlockPool>();
+            blockPoolMock
+                .Setup(x => x.TryGet(0, out nullBlock))
+                .Returns(false);
+
+            var asyncDelayerMock = this.AutoMockContainer.GetMock<IAsyncDelayer>();
+            asyncDelayerMock
+                .Setup(x => x.Delay(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+                .Callback(() => { waitForDelayForToGetNextBlock.Set(); })
+                .Returns(Task.Run(() => { }));
+
+            var testee = this.AutoMockContainer.Create<BlockProcessor>();
+
+            testee.Run(nullBlock);
+            waitForDelayForToGetNextBlock.WaitOne();
+            testee.Dispose();
+
+            blockPoolMock.Verify(x => x.TryGet(expectedIndexOfBlockToRetrieveFromBlockPool, out nullBlock));
+
         }
     }
 }
