@@ -2,7 +2,7 @@ language: csharp
 os:
   - linux
 dist: trusty
-dotnet: 2.1.402
+dotnet: 2.1.300
 mono: none
 sudo: required
 
