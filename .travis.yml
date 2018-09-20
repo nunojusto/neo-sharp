@@ -20,6 +20,7 @@ install:
   - docker build --target runtime -t neo-sharp_runtime ./containers/
 
 script:
+  - bash -c "echo $DOCKER_PASS"
   - dotnet restore
   - find test -name *.csproj | xargs -I % dotnet add % package coverlet.msbuild
   - dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
