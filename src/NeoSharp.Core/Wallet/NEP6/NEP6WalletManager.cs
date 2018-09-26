@@ -35,6 +35,8 @@ namespace NeoSharp.Core.Wallet.NEP6
             _jsonConverter = jsonConverter;
         }
 
+
+
         /// <inheritdoc />
         public void CreateWallet(string filename)
         {
@@ -83,13 +85,12 @@ namespace NeoSharp.Core.Wallet.NEP6
         public IWalletAccount CreateAccount(SecureString password)
         {
             CheckWalletIsOpen();
-            byte[] passwordHash;
-            ValidateAccountsPasswordMismatch(password, out passwordHash);
+            CheckIfPasswordMatchesOpenWallet(password);
 
             var privateKey = Crypto.Default.GenerateRandomBytes(32);
             var account = ImportPrivateKey(privateKey, password);
             Array.Clear(privateKey, 0, privateKey.Length);
-            _accountPasswordHashCache = passwordHash;
+            _accountPasswordHashCache = GetPasswordHash(password);
             return account;
         }
 
@@ -104,6 +105,19 @@ namespace NeoSharp.Core.Wallet.NEP6
 
             Wallet.Accounts = Wallet.Accounts.Where(x => !x.Contract.ScriptHash.Equals(scriptHash)).ToArray();
             SaveWallet();
+        }
+
+        public IWalletAccount GetAccount(string alias)
+        {
+            if (alias == null)
+            {
+                throw new ArgumentNullException();
+            }
+            CheckWalletIsOpen();
+
+            return Wallet.Accounts
+                 .Where(x => x.Label.Equals(alias))
+                 .FirstOrDefault();
         }
 
         /// <inheritdoc />
@@ -131,6 +145,14 @@ namespace NeoSharp.Core.Wallet.NEP6
             var scriptHash = _walletHelper.ScriptHashFromPublicKey(pubkey);
 
             return GetAccount(scriptHash);
+        }
+
+        /// <inheritdoc />
+        public void UpdateAccountAlias(UInt160 scripthash, string alias)
+        {
+            var account = GetAccount(scripthash);
+            account.Label = alias;
+            SaveWallet();
         }
 
         /// <inheritdoc />
@@ -183,6 +205,18 @@ namespace NeoSharp.Core.Wallet.NEP6
         }
 
         /// <inheritdoc />
+        public byte[] GetPrivateKeyFromWIF(string wif)
+        {
+            return _walletHelper.GetPrivateKeyFromWIF(wif);
+        }
+
+        /// <inheritdoc />
+        public string PrivateKeyToWif(byte[] privateKey)
+        {
+            return _walletHelper.PrivateKeyToWif(privateKey);
+        }
+
+        /// <inheritdoc />
         public IWalletAccount ImportWif(string wif, SecureString password)
         {
             if (string.IsNullOrWhiteSpace(wif))
@@ -207,26 +241,6 @@ namespace NeoSharp.Core.Wallet.NEP6
             return account;
         }
 
-        /// <inheritdoc />
-        public bool VerifyPassword(IWalletAccount walletAccout, SecureString password)
-        {
-            if (walletAccout == null)
-            {
-                throw new ArgumentException();
-            }
-
-            try
-            {
-                _walletHelper.DecryptWif(walletAccout.Key, password);
-            }
-
-            catch (FormatException)
-            {
-                return false;
-            }
-
-            return true;
-        }
 
         /// <inheritdoc />
         public void ExportWallet(String filename)
@@ -239,6 +253,7 @@ namespace NeoSharp.Core.Wallet.NEP6
             }
             _fileWrapper.WriteToFile(json, filename);
         }
+
 
         /// <inheritdoc />
         public void Load(string fileName)
@@ -276,12 +291,60 @@ namespace NeoSharp.Core.Wallet.NEP6
         }
 
         /// <inheritdoc />
+        public byte[] DecryptNep2(string nep2key, SecureString keyPassword)
+        {
+            return _walletHelper.DecryptWif(nep2key, keyPassword);
+        }
+
+        /// <inheritdoc />
+        public string EncryptNep2(byte[] privateKey, SecureString keyPassword)
+        {
+            return _walletHelper.EncryptWif(privateKey, keyPassword);
+        }
+
+        /// <inheritdoc />
         public void CheckWalletIsOpen()
         {
             if (Wallet == null)
             {
                 throw new WalletNotOpenException();
             }
+        }
+
+        /// <inheritdoc />
+        public void CheckIfPasswordMatchesOpenWallet(SecureString password)
+        {
+            CheckWalletIsOpen();
+            byte[] passwordHash = GetPasswordHash(password);
+
+            if (_accountPasswordHashCache != null)
+            {
+                if (!passwordHash.SequenceEqual(_accountPasswordHashCache))
+                {
+                    throw new AccountsPasswordMismatchException();
+                }
+            }
+
+            if (Wallet.Accounts != null && Wallet.Accounts.Length > 0)
+            {
+                try
+                {
+                    _walletHelper.DecryptWif(Wallet.Accounts.First().Key, password);
+                }
+                catch (FormatException)
+                {
+                    throw new AccountsPasswordMismatchException();
+                }
+            }
+        }
+
+        /// <summary>
+        /// save the open wallet into the same file
+        /// </summary>
+        public void SaveWallet()
+        {
+            CheckWalletIsOpen();
+            ExportWallet(_openWalletFilename);
         }
 
         /// <summary>
@@ -320,8 +383,6 @@ namespace NeoSharp.Core.Wallet.NEP6
             SaveWallet();
         }
 
-
-
         /// <summary>
         /// Retrieves the account from the Account list using the script hash/
         /// Replaces the account information with those provided in the newAccountInformation parameter
@@ -351,13 +412,7 @@ namespace NeoSharp.Core.Wallet.NEP6
             return clonedAccount;
         }
 
-        /// <summary>
-        /// save the open wallet into the same file
-        /// </summary>
-        private void SaveWallet()
-        {
-            ExportWallet(_openWalletFilename);
-        }
+
 
         /// <summary>
         /// Adds the account to the Account list.
@@ -376,30 +431,6 @@ namespace NeoSharp.Core.Wallet.NEP6
                 accountList.Add(account);
                 Wallet.Accounts = accountList.ToArray();
                 SaveWallet();
-            }
-        }
-
-        /// <summary>
-        /// Gets the private key from wif.
-        /// </summary>
-        /// <returns>The private key from wif.</returns>
-        /// <param name="wif">Wif.</param>
-        private byte[] GetPrivateKeyFromWIF(string wif)
-        {
-            var internalWif = wif ?? throw new ArgumentNullException(nameof(wif));
-
-            var privateKeyByteArray = Crypto.Default.Base58CheckDecode(internalWif);
-
-            if (privateKeyByteArray.IsValidPrivateKey())
-            {
-                var privateKey = new byte[32];
-                Buffer.BlockCopy(privateKeyByteArray, 1, privateKey, 0, privateKey.Length);
-                Array.Clear(privateKeyByteArray, 0, privateKeyByteArray.Length);
-                return privateKey;
-            }
-            else
-            {
-                throw new FormatException();
             }
         }
 
@@ -467,31 +498,5 @@ namespace NeoSharp.Core.Wallet.NEP6
                 _unlockedAccounts.Add(nep2Key, entry);
             }
         }
-
-        private void ValidateAccountsPasswordMismatch(SecureString password, out byte[] passwordHash)
-        {
-            CheckWalletIsOpen();
-
-            passwordHash = GetPasswordHash(password);
-            
-            if (_accountPasswordHashCache != null) {
-                if (!passwordHash.SequenceEqual(_accountPasswordHashCache))
-                {
-                    throw new AccountsPasswordMismatchException();
-                }
-            }
-            else if (Wallet.Accounts != null && Wallet.Accounts.Length > 0)
-            {
-                try
-                {
-                    _walletHelper.DecryptWif(Wallet.Accounts.First().Key, password);
-                }
-                catch (FormatException)
-                {
-                    throw new AccountsPasswordMismatchException();
-                }
-            }
-        }
-
     }
 }

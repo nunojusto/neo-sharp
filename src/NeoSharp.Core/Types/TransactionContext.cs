@@ -5,74 +5,68 @@ using NeoSharp.Core.Models;
 
 namespace NeoSharp.Core.Types
 {
-    public class TransactionContext
+    public class TransactionContext : ITransactionContext
     {
-        // TODO #362: How to inject this
-
-        public static readonly Fixed8 DefaultSystemFee = Fixed8.Zero;// Settings.Default.SystemFee.TryGetValue(Type, out Fixed8 fee) ? fee : Fixed8.Zero;
-        public static readonly UInt256 UtilityTokenHash = UInt256.Zero, GoverningTokenHash = UInt256.Zero;
+        public Fixed8 DefaultSystemFee => Fixed8.Zero; // Settings.Default.SystemFee.TryGetValue(Type, out Fixed8 fee) ? fee : Fixed8.Zero;
+        public UInt256 UtilityTokenHash => UInt256.Zero;
+        public UInt256 GoverningTokenHash => UInt256.Zero;
 
         // ---------------------------
 
         private IReadOnlyDictionary<CoinReference, TransactionOutput> _references;
-        public readonly IBlockchain Blockchain = null;
 
-        private readonly Transaction _tx;
         private Fixed8 _systemFee = -Fixed8.Satoshi, _network_fee = -Fixed8.Satoshi;
 
         /// <summary>
         /// System Fee
         /// </summary>
-        public Fixed8 SystemFee
+        public Fixed8 GetSystemFee(Transaction tx)
         {
-            get
+            if (_systemFee == -Fixed8.Satoshi)
             {
-                if (_systemFee == -Fixed8.Satoshi)
+                _systemFee = DefaultSystemFee;
+
+                switch (tx.Type)
                 {
-                    _systemFee = DefaultSystemFee;
+                    case TransactionType.InvocationTransaction:
+                        {
+                            InvocationTransaction itx = (InvocationTransaction)tx;
+                            _systemFee = itx.Gas;
 
-                    switch (_tx.Type)
-                    {
-                        case TransactionType.InvocationTransaction:
+                            break;
+                        }
+                    case TransactionType.IssueTransaction:
+                        {
+                            if (tx.Version >= 1)
                             {
-                                InvocationTransaction itx = (InvocationTransaction)_tx;
-                                _systemFee = itx.Gas;
-
-                                break;
+                                _systemFee = Fixed8.Zero;
+                                return _systemFee;
                             }
-                        case TransactionType.IssueTransaction:
-                            {
-                                if (_tx.Version >= 1)
-                                {
-                                    _systemFee = Fixed8.Zero;
-                                    return _systemFee;
-                                }
 
-                                if (_tx.Outputs.All(p => p.AssetId == GoverningTokenHash || p.AssetId == UtilityTokenHash))
-                                    _systemFee = Fixed8.Zero;
+                            if (tx.Outputs.All(p => p.AssetId == GoverningTokenHash || p.AssetId == UtilityTokenHash))
+                                _systemFee = Fixed8.Zero;
 
-                                break;
-                            }
-                        case TransactionType.RegisterTransaction:
-                            {
-                                var rtx = (RegisterTransaction) _tx;
+                            break;
+                        }
+                    case TransactionType.RegisterTransaction:
+                        {
+                            var rtx = (RegisterTransaction) tx;
 
-                                if (rtx.AssetType == AssetType.GoverningToken || rtx.AssetType == AssetType.UtilityToken)
-                                    _systemFee = Fixed8.Zero;
+                            if (rtx.AssetType == AssetType.GoverningToken || rtx.AssetType == AssetType.UtilityToken)
+                                _systemFee = Fixed8.Zero;
 
-                                break;
-                            }
-                        case TransactionType.StateTransaction:
-                            {
-                                StateTransaction stx = (StateTransaction)_tx;
-                                _systemFee = new Fixed8(stx.Descriptors.Sum(p => p.SystemFee.Value));
+                            break;
+                        }
+                    case TransactionType.StateTransaction:
+                        {
+                            StateTransaction stx = (StateTransaction)tx;
+                            _systemFee = new Fixed8(stx.Descriptors.Sum(p => p.SystemFee.Value));
 
-                                break;
-                            }
-                    }
+                            break;
+                        }
                 }
-                return _systemFee;
             }
+            return _systemFee;
         }
 
         // TODO #361 [AboimPinto]: This logic need to be done in different way because we cannot await a method in the 'get' body.
@@ -138,16 +132,5 @@ namespace NeoSharp.Core.Types
         //        return _references;
         //    }
         //}
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="tx">Transaction</param>
-        /// <param name="blockchain">Blockchain</param>
-        public TransactionContext(Transaction tx, IBlockchain blockchain)
-        {
-            _tx = tx;
-            Blockchain = blockchain;
-        }
     }
 }
