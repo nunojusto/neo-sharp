@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using NeoSharp.Core.Cryptography;
 using NeoSharp.Core.Messaging.Messages;
 using NeoSharp.Core.Network;
 
@@ -11,14 +12,13 @@ namespace NeoSharp.Core.Messaging.Handlers
         #region Private fields
         private const int MaxCountToSend = 200;
 
-        private readonly IServer _server;
+        private readonly IServerContext _serverContext;
         #endregion
 
         #region Constructor 
-        public GetAddrMessageMessageHandler(IServer server)
+        public GetAddrMessageMessageHandler(IServerContext serverContext)
         {
-            // TODO #433: Replace IServer with IServerContext
-            _server = server ?? throw new ArgumentNullException(nameof(server));
+            this._serverContext = serverContext ?? throw new ArgumentNullException(nameof(serverContext));
         }
         #endregion
 
@@ -26,9 +26,8 @@ namespace NeoSharp.Core.Messaging.Handlers
         /// <inheritdoc />
         public override async Task Handle(GetAddrMessage message, IPeer sender)
         {
-            var rand = new Random(Environment.TickCount);
-            var peers = _server.ConnectedPeers
-                .OrderBy(p => rand.Next())
+            var peers = this._serverContext.ConnectedPeers
+                .OrderBy(p => BitConverter.ToUInt32(Crypto.Default.GenerateRandomBytes(4), 0))
                 .Take(MaxCountToSend)
                 .ToArray();
 
