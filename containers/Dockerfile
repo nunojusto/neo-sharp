@@ -5,7 +5,7 @@ FROM microsoft/dotnet:latest as builder
 # arguments to choose branch and source repo (defaults are development and CoZ/neo-sharp)
 ARG BRANCH="development"
 ARG SOURCE_REPO="https://github.com/CityOfZion/neo-sharp.git"
-ARG NETWORK="mainnet"
+ARG NEO-NETWORK="mainnet"
 
 # create folders structure and clone neo-sharp repo
 RUN mkdir /repo && \
