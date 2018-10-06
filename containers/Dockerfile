@@ -26,7 +26,7 @@ RUN export arch=$(uname -m);if [ "$arch" = "armv7l" ]; then apt-get update && \
 FROM microsoft/dotnet:2.1-runtime as runtime
 
 # arguments to choose what network to useb (defaults to mainnet)
-ARG NEO-NETWORK="mainnet"
+ARG NEO_NETWORK="mainnet"
 
 # install rocksdb dependencies and delete temp packages after to clean the most garbase possible
 RUN apt-get update && \
@@ -38,7 +38,7 @@ RUN apt-get update && \
 COPY --from=builder /home/neo-sharp/* /home/neo-sharp/
 
 # Set 
-RUN cp /home/neo-sharp/appsettings.$NEO-NETWORK.json /home/neo-sharp/appsettings.json
+RUN cp /home/neo-sharp/appsettings.$NEO_NETWORK.json /home/neo-sharp/appsettings.json
 
 # workdir
 WORKDIR /home/neo-sharp
