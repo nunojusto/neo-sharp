@@ -5,6 +5,7 @@ FROM microsoft/dotnet:latest as builder
 # arguments to choose branch and source repo (defaults are development and CoZ/neo-sharp)
 ARG BRANCH="development"
 ARG SOURCE_REPO="https://github.com/CityOfZion/neo-sharp.git"
+ARG NETWORK="neo-mainnet"
 
 # create folders structure and clone neo-sharp repo
 RUN mkdir /repo && \
@@ -33,6 +34,9 @@ RUN apt-get update && \
 
 # copy app from builder stage
 COPY --from=builder /home/neo-sharp/* /home/neo-sharp/
+
+# Set 
+RUN cp /home/neo-sharp/appsettings.$NETWORK.json /home/neo-sharp/appsettings.json
 
 # workdir
 WORKDIR /home/neo-sharp
