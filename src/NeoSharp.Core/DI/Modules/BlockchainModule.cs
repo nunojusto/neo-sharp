@@ -2,6 +2,7 @@
 using NeoSharp.Core.Blockchain;
 using NeoSharp.Core.Blockchain.Genesis;
 using NeoSharp.Core.Blockchain.Processing;
+using NeoSharp.Core.Blockchain.Processing.BlockHeaderProcessing;
 using NeoSharp.Core.Blockchain.Repositories;
 using NeoSharp.Core.Blockchain.State;
 using NeoSharp.Core.Models;
@@ -29,6 +30,7 @@ namespace NeoSharp.Core.DI.Modules
             containerBuilder.RegisterSingleton<ITransactionPool, TransactionPool>();
             containerBuilder.RegisterSingleton<ITransactionContext, TransactionContext>();
             containerBuilder.RegisterSingleton<ITransactionPersister<Transaction>, TransactionPersister>();
+            containerBuilder.RegisterSingleton<IBlockHeaderValidator, BlockHeaderValidator>();
 
             containerBuilder.RegisterSingleton<ITransactionPersister<ClaimTransaction>, ClaimTransactionPersister>();
             containerBuilder.RegisterSingleton<ITransactionPersister<InvocationTransaction>, InvocationTransactionPersister>();
@@ -38,11 +40,21 @@ namespace NeoSharp.Core.DI.Modules
             containerBuilder.RegisterSingleton<ITransactionPersister<StateTransaction>, StateTransactionPersister>();
             containerBuilder.RegisterSingleton<ITransactionPersister<EnrollmentTransaction>, EnrollmentTransactionPersister>();
 
-            containerBuilder.RegisterSingleton<IWitnessOperationsManager, WitnessOperationsManager>();
-            containerBuilder.RegisterSingleton<ITransactionOperationsManager, TransactionOperationManager>();
+            containerBuilder.RegisterSingleton<ISigner<BlockHeader>, BlockHeaderOperationsManager>();
+            containerBuilder.RegisterSingleton<IVerifier<BlockHeader>, BlockHeaderOperationsManager>();
             containerBuilder.RegisterSingleton<IBlockHeaderOperationsManager, BlockHeaderOperationsManager>();
-            containerBuilder.RegisterSingleton<IBlockSigner, BlockSigner>();
-            containerBuilder.RegisterSingleton<IBlockVerifier, BlockVerifier>();
+
+            containerBuilder.RegisterSingleton<ISigner<Block>, BlockOperationManager>();
+            containerBuilder.RegisterSingleton<IVerifier<Block>, BlockOperationManager>();
+            containerBuilder.RegisterSingleton<IBlockOperationsManager, BlockOperationManager>();
+
+            containerBuilder.RegisterSingleton<ISigner<Transaction>, TransactionOperationManager>();
+            containerBuilder.RegisterSingleton<IVerifier<Transaction>, TransactionOperationManager>();
+            containerBuilder.RegisterSingleton<ITransactionOperationsManager, TransactionOperationManager>();
+
+            containerBuilder.RegisterSingleton<ISigner<Witness>, WitnessOperationsManager>();
+            containerBuilder.RegisterSingleton<IVerifier<Witness>, WitnessOperationsManager>();
+            containerBuilder.RegisterSingleton<IWitnessOperationsManager, WitnessOperationsManager>();
             #endregion
 
             containerBuilder.RegisterSingleton<IAccountManager, AccountManager>();

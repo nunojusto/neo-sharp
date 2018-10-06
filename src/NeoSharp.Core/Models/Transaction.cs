@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using NeoSharp.BinarySerialization;
 using NeoSharp.Core.Converters;
-using NeoSharp.Core.Types;
+using NeoSharp.Types;
 using Newtonsoft.Json;
 
 namespace NeoSharp.Core.Models
@@ -78,7 +78,7 @@ namespace NeoSharp.Core.Models
         /// <param name="deserializer">Deserializer</param>
         /// <param name="reader">Reader</param>
         /// <param name="settings">Settings</param>
-        public void Deserialize(IBinaryDeserializer deserializer, BinaryReader reader, BinarySerializerSettings settings = null)
+        public void Deserialize(IBinarySerializer deserializer, BinaryReader reader, BinarySerializerSettings settings = null)
         {
             // Check type
 
@@ -158,7 +158,7 @@ namespace NeoSharp.Core.Models
         /// <param name="reader">Reader</param>
         /// <param name="settings">Settings</param>
         /// <returns>How many bytes have been written</returns>
-        protected virtual void DeserializeExclusiveData(IBinaryDeserializer deserializer, BinaryReader reader, BinarySerializerSettings settings = null)
+        protected virtual void DeserializeExclusiveData(IBinarySerializer deserializer, BinaryReader reader, BinarySerializerSettings settings = null)
         {
 
         }

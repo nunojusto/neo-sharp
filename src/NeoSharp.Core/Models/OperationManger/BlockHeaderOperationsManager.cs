@@ -1,7 +1,8 @@
 ﻿using System;
 using NeoSharp.BinarySerialization;
 using NeoSharp.Core.Cryptography;
-using NeoSharp.Core.Types;
+using NeoSharp.Cryptography;
+using NeoSharp.Types;
 
 namespace NeoSharp.Core.Models.OperationManger
 {
@@ -10,40 +11,43 @@ namespace NeoSharp.Core.Models.OperationManger
         #region Private Fields
         private readonly Crypto _crypto;
         private readonly IBinarySerializer _binarySerializer;
-        private readonly IWitnessOperationsManager _witnessOperationsManager;
+        private readonly ISigner<Witness> _witnessSigner;
         #endregion
 
         #region Constructor 
         public BlockHeaderOperationsManager(
             Crypto crypto,
             IBinarySerializer binarySerializer,
-            IWitnessOperationsManager witnessOperationsManager)
+            ISigner<Witness> witnessSigner)
         {
-            this._crypto = crypto;
-            this._binarySerializer = binarySerializer;
-            this._witnessOperationsManager = witnessOperationsManager;
+            _crypto = crypto;
+            _binarySerializer = binarySerializer;
+            _witnessSigner = witnessSigner;
         }
         #endregion
 
         #region IBlockHeaderOperationsManager implementation 
         public void Sign(BlockHeader blockHeader)
         {
+            // Check if the BlockHeader is already signed.
+            if (blockHeader.Hash != null && blockHeader.Hash != UInt256.Zero) return;       
+
             if (blockHeader.MerkleRoot == null)
             {
                 // Compute hash
                 blockHeader.MerkleRoot = MerkleTree.ComputeRoot(blockHeader.TransactionHashes);
             }
 
-            var serializedBlockHeader = this._binarySerializer.Serialize(blockHeader, new BinarySerializerSettings()
+            var serializedBlockHeader = _binarySerializer.Serialize(blockHeader, new BinarySerializerSettings()
             {
                 Filter = a => a != nameof(Witness) && 
                               a != nameof(Type) && 
                               a != nameof(blockHeader.TransactionHashes)
             });
 
-            blockHeader.Hash = new UInt256(this._crypto.Hash256(serializedBlockHeader));
+            blockHeader.Hash = new UInt256(_crypto.Hash256(serializedBlockHeader));
 
-            this._witnessOperationsManager.Sign(blockHeader.Witness);
+            _witnessSigner.Sign(blockHeader.Witness);
         }
 
         public bool Verify(BlockHeader blockHeader)

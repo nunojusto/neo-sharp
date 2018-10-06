@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using NeoSharp.Core.Models;
 using NeoSharp.Core.Persistence;
-using NeoSharp.Core.Types;
+using NeoSharp.Types;
 
 namespace NeoSharp.Core.Blockchain.Processing
 {
@@ -23,8 +23,8 @@ namespace NeoSharp.Core.Blockchain.Processing
 
             var inputs = await Task.WhenAll(inputsTasks);
 
-            var assetChanges = new Dictionary<UInt256, Fixed8>()
-                ;
+            var assetChanges = new Dictionary<UInt256, Fixed8>();
+
             foreach (var input in inputs)
             {
                 if (assetChanges.ContainsKey(input.AssetId))

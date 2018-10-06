@@ -2,7 +2,7 @@
 using System.IO;
 using NeoSharp.BinarySerialization;
 using NeoSharp.Core.Converters;
-using NeoSharp.Core.Types;
+using NeoSharp.Types;
 
 namespace NeoSharp.Core.Models
 {
@@ -37,7 +37,7 @@ namespace NeoSharp.Core.Models
 
         #region Exclusive serialization
 
-        protected override void DeserializeExclusiveData(IBinaryDeserializer deserializer, BinaryReader reader, BinarySerializerSettings settings = null)
+        protected override void DeserializeExclusiveData(IBinarySerializer deserializer, BinaryReader reader, BinarySerializerSettings settings = null)
         {
             if (Version > 1) throw new FormatException(nameof(Version));
 

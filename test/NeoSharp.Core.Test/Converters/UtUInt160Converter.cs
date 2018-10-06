@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NeoSharp.BinarySerialization;
-using NeoSharp.Core.Types;
+using NeoSharp.Types;
 
 namespace NeoSharp.Core.Test.Converters
 {
@@ -58,14 +58,13 @@ namespace NeoSharp.Core.Test.Converters
             // Arrange
             BinarySerializer.RegisterTypes(typeof(UInt160));
             var _serializer = new BinarySerializer();
-            var _deserializer = new BinaryDeserializer();
             var result = new byte[] {
                 157, 179, 60, 8, 66, 122, 255, 105, 126, 49,
                 14, 255, 59, 82, 218, 113, 248, 145, 98, 5};
 
             // Act
             var ret = _serializer.Serialize(_value);
-            var clone = _deserializer.Deserialize<UInt160>(ret);
+            var clone = _serializer.Deserialize<UInt160>(ret);
 
             // Assert
             CollectionAssert.AreEqual(result, ret);

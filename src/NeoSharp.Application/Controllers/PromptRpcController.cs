@@ -11,7 +11,8 @@ using NeoSharp.Core.Extensions;
 using NeoSharp.Core.Models;
 using NeoSharp.Core.Network.Rpc;
 using NeoSharp.Core.SmartContract.ContractParameters;
-using NeoSharp.Core.Types;
+using NeoSharp.Types;
+using NeoSharp.Types.ExtensionMethods;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -20,7 +21,7 @@ namespace NeoSharp.Application.Controllers
     public class PromptRpcController : IPromptController
     {
         private readonly IRpcServer _rpc;
-        private readonly IConsoleWriter _consoleWriter;
+        private readonly IConsoleHandler _consoleHandler;
 
         // TODO #402: invoke and invokefunction => ContractParameter json serializable/deserializable acording to NEO
 
@@ -40,11 +41,11 @@ namespace NeoSharp.Application.Controllers
         /// Constructor
         /// </summary>
         /// <param name="rpc">Rpc</param>
-        /// <param name="consoleWriter">Console writter</param>
-        public PromptRpcController(IRpcServer rpc, IConsoleWriter consoleWriter)
+        /// <param name="consoleHandler">Console handler</param>
+        public PromptRpcController(IRpcServer rpc, IConsoleHandler consoleHandler)
         {
             _rpc = rpc;
-            _consoleWriter = consoleWriter;
+            _consoleHandler = consoleHandler;
         }
 
         #region Base calls
@@ -79,7 +80,7 @@ namespace NeoSharp.Application.Controllers
 
                 if (!rest.IsSuccessStatusCode)
                 {
-                    _consoleWriter.WriteLine(rest.StatusCode + " - " + rest.ReasonPhrase, ConsoleOutputStyle.Error);
+                    _consoleHandler.WriteLine(rest.StatusCode + " - " + rest.ReasonPhrase, ConsoleOutputStyle.Error);
                     return;
                 }
 
@@ -87,13 +88,13 @@ namespace NeoSharp.Application.Controllers
 
                 if (deserializeResult)
                 {
-                    var obj = BinaryDeserializer.Default.Deserialize<T>(json["result"].Value<string>().HexToBytes());
+                    var obj = BinarySerializer.Default.Deserialize<T>(json["result"].Value<string>().HexToBytes());
 
-                    _consoleWriter.WriteObject(obj, PromptOutputStyle.json);
+                    _consoleHandler.WriteObject(obj, PromptOutputStyle.json);
                 }
                 else
                 {
-                    _consoleWriter.WriteObject(json, PromptOutputStyle.json);
+                    _consoleHandler.WriteObject(json, PromptOutputStyle.json);
                 }
             }
         }

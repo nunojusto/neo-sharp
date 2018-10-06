@@ -4,9 +4,8 @@ using System.Globalization;
 using System.IO;
 using NeoSharp.BinarySerialization;
 using NeoSharp.BinarySerialization.SerializationHooks;
-using NeoSharp.Core.Types;
 
-namespace NeoSharp.Core.Converters
+namespace NeoSharp.Types.Converters
 {
     class UInt256Converter : TypeConverter, IBinaryCustomSerializable
     {
@@ -48,7 +47,7 @@ namespace NeoSharp.Core.Converters
             return base.ConvertFrom(context, culture, value);
         }
 
-        public object Deserialize(IBinaryDeserializer binaryDeserializer, BinaryReader reader, Type type, BinarySerializerSettings settings = null)
+        public object Deserialize(IBinarySerializer binaryDeserializer, BinaryReader reader, Type type, BinarySerializerSettings settings = null)
         {
             var val = new byte[FixedLength];
             reader.Read(val, 0, FixedLength);

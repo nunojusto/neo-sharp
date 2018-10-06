@@ -1,6 +1,6 @@
 ﻿using System;
 using NeoSharp.BinarySerialization;
-using NeoSharp.Core.Types;
+using NeoSharp.Types;
 using Newtonsoft.Json;
 
 namespace NeoSharp.Core.Models
@@ -11,7 +11,6 @@ namespace NeoSharp.Core.Models
     [Serializable]
     public class BlockHeader
     {
-
         #region Serializable data
 
         [BinaryProperty(0)]
@@ -46,7 +45,7 @@ namespace NeoSharp.Core.Models
         /// Set the kind of the header
         /// </summary>
         [BinaryProperty(7)]
-        public HeaderType Type;
+        public HeaderType Type { get; set; }
 
         [BinaryProperty(8)]
         [JsonProperty("script")]

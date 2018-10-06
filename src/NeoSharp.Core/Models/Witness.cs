@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using NeoSharp.BinarySerialization;
-using NeoSharp.Core.Types;
+using NeoSharp.Types;
 using Newtonsoft.Json;
 
 namespace NeoSharp.Core.Models
@@ -9,7 +9,8 @@ namespace NeoSharp.Core.Models
     [Serializable]
     public class Witness : IEquatable<Witness>
     {
-        [JsonProperty("txid")] public UInt160 Hash { get; set; }
+        [JsonProperty("hash")]
+        public UInt160 Hash { get; set; }
 
         [BinaryProperty(0, MaxLength = 65536)]
         [JsonProperty("invocation")]

@@ -1,12 +1,18 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using NeoSharp.Core.Models;
-using NeoSharp.Core.Types;
+using NeoSharp.Types;
 
 namespace NeoSharp.Core.Blockchain.Repositories
 {
     public interface IBlockRepository
     {
+        /// <summary>
+        /// Set the total/ current block height
+        /// </summary>
+        /// <param name="height">Total / current block height</param>
+        Task SetTotalBlockHeight(uint height);
+
         /// <summary>
         /// Retrieves the total / current block height
         /// </summary>
@@ -88,5 +94,20 @@ namespace NeoSharp.Core.Blockchain.Repositories
         /// <param name="hash"></param>
         /// <returns></returns>
         Task<BlockHeader> GetBlockHeader(UInt256 hash);
+
+        /// <summary>
+        /// Add block header to the repository and update the block header height.
+        /// This two operations are always together and make sense on this level to put them together.
+        /// </summary>
+        /// <param name="blockHeader"></param>
+        /// <returns></returns>
+        Task AddBlockHeader(BlockHeader blockHeader);
+
+        /// <summary>
+        /// Update block header in the repository
+        /// </summary>
+        /// <param name="blockHeader"></param>
+        /// <returns></returns>
+        Task UpdateBlockHeader(BlockHeader blockHeader);
     }
 }

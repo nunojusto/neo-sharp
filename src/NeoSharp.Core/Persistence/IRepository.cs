@@ -2,14 +2,13 @@
 using System.Threading.Tasks;
 using NeoSharp.Core.Cryptography;
 using NeoSharp.Core.Models;
-using NeoSharp.Core.Types;
+using NeoSharp.Types;
 using Validator = NeoSharp.Core.Models.Validator;
 
 namespace NeoSharp.Core.Persistence
 {
     public interface IRepository
     {
-
         #region System
 
         /// <summary>

@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using NeoSharp.Core.Blockchain.Processing;
+using NeoSharp.Core.Extensions;
 using NeoSharp.Core.Logging;
 using NeoSharp.Core.Messaging.Messages;
 using NeoSharp.Core.Models;
 using NeoSharp.Core.Network;
-using NeoSharp.Core.Types;
+using NeoSharp.Types;
 
 namespace NeoSharp.Core.Messaging.Handlers
 {
@@ -22,61 +23,49 @@ namespace NeoSharp.Core.Messaging.Handlers
         #endregion
 
         #region Constructor 
-        public BlockHeadersMessageHandler(
-            IBlockPersister blockPersister, 
-            IBlockchainContext blockchainContext, 
-            ILogger<BlockHeadersMessageHandler> logger)
+
+        public BlockHeadersMessageHandler
+            (
+            IBlockPersister blockPersister,
+            IBlockchainContext blockchainContext,
+            ILogger<BlockHeadersMessageHandler> logger
+            )
         {
             _blockPersister = blockPersister ?? throw new ArgumentNullException(nameof(blockPersister));
             _blockchainContext = blockchainContext ?? throw new ArgumentNullException(nameof(blockchainContext));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
+
         #endregion
 
         #region MessageHandler override Methods 
         /// <inheritdoc />
         public override async Task Handle(BlockHeadersMessage message, IPeer sender)
         {
-            async void HeadersPersisted(object _, BlockHeader[] blockHeaders) => await BlockHeadersPersisted(sender, blockHeaders);
+            message.Payload.Headers.ForEach(a => a.Type = HeaderType.Header);
+            var persistedBlockHeaders = await _blockPersister.Persist(message.Payload.Headers ?? new BlockHeader[0]);
 
-            try
-            {
-                _blockPersister.OnBlockHeadersPersisted += HeadersPersisted;
-
-                await _blockPersister.Persist(message.Payload.Headers ?? new BlockHeader[0]);
-            }
-            finally
-            {
-                _blockPersister.OnBlockHeadersPersisted -= HeadersPersisted;
-            }
-
-            if (this._blockchainContext.LastBlockHeader.Index < sender.Version.CurrentBlockIndex)
-            {
-                _logger.LogInformation(
-                    $"The peer has {sender.Version.CurrentBlockIndex + 1} blocks but the current number of block headers is {this._blockchainContext.LastBlockHeader.Index + 1}.");
-                await sender.Send(new GetBlockHeadersMessage(this._blockchainContext.LastBlockHeader.Hash));
-            }
-        }
-
-        /// <inheritdoc />
-        public override bool CanHandle(Message message)
-        {
-            return message is BlockHeadersMessage;
-        }
-        #endregion
-
-        #region Private Methods 
-        // TODO #432: Find btter place for block sync
-        private static async Task BlockHeadersPersisted(IPeer source, IEnumerable<BlockHeader> blockHeaders)
-        {
-            var blockHashes = blockHeaders
+            var persistedBlockHashes = persistedBlockHeaders
                 .Select(bh => bh.Hash)
                 .Where(bh => bh != null)
                 .ToArray();
 
-            await SynchronizeBlocks(source, blockHashes);
+            await SynchronizeBlocks(sender, persistedBlockHashes);
+
+            if (_blockchainContext.LastBlockHeader.Index < sender.Version.CurrentBlockIndex)
+            {
+                _logger.LogInformation(
+                    $"The peer has {sender.Version.CurrentBlockIndex + 1} blocks but the current number of block headers is {_blockchainContext.LastBlockHeader.Index + 1}.");
+                await sender.Send(new GetBlockHeadersMessage(_blockchainContext.LastBlockHeader.Hash));
+            }
         }
 
+        /// <inheritdoc />
+        public override bool CanHandle(Message message) => message is BlockHeadersMessage;
+
+        #endregion
+
+        #region Private Methods 
         private static async Task SynchronizeBlocks(IPeer source, IReadOnlyCollection<UInt256> blockHashes)
         {
             var batchesCount = blockHashes.Count / MaxBlocksCountToSync + (blockHashes.Count % MaxBlocksCountToSync != 0 ? 1 : 0);

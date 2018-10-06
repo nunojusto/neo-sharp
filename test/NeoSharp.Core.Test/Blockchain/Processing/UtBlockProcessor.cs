@@ -6,13 +6,14 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using NeoSharp.BinarySerialization;
 using NeoSharp.Core.Blockchain.Processing;
-using NeoSharp.Core.Extensions;
 using NeoSharp.Core.Helpers;
 using NeoSharp.Core.Models;
 using NeoSharp.Core.Models.OperationManger;
+using NeoSharp.Core.Network;
 using NeoSharp.Core.Persistence;
-using NeoSharp.Core.Types;
 using NeoSharp.TestHelpers;
+using NeoSharp.Types;
+using NeoSharp.Types.ExtensionMethods;
 
 namespace NeoSharp.Core.Test.Blockchain.Processing
 {
@@ -50,7 +51,7 @@ namespace NeoSharp.Core.Test.Blockchain.Processing
             var block = new Block();
 
             this.AutoMockContainer
-                .GetMock<IBlockSigner>()
+                .GetMock<ISigner<Block>>()
                 .Setup(x => x.Sign(block))
                 .Callback<Block>(x => x.Hash = null);
 
@@ -66,7 +67,7 @@ namespace NeoSharp.Core.Test.Blockchain.Processing
             var block = new Block();
 
             this.AutoMockContainer
-                .GetMock<IBlockSigner>()
+                .GetMock<ISigner<Block>>()
                 .Setup(x => x.Sign(block))
                 .Callback<Block>(x => x.Hash = UInt256.Zero);
 
@@ -198,37 +199,30 @@ namespace NeoSharp.Core.Test.Blockchain.Processing
             blockPoolMock
                 .Setup(x => x.TryGet(1, out newBlock))
                 .Returns(true);
+            blockPoolMock
+                .Setup(x => x.Remove(1))
+                .Callback<uint>(x => { waitForBlockProcessedEvent.Set(); });
 
             var blockPersisterMock = this.AutoMockContainer.GetMock<IBlockPersister>();
 
+            this.AutoMockContainer
+                .GetMock<IBlockchainContext>()
+                .SetupGet(x => x.CurrentBlock)
+                .Returns(currentBlock);
+
             var testee = this.AutoMockContainer.Create<BlockProcessor>();
 
-            testee.OnBlockProcessed += (_, block) =>
-            {
-                block
-                    .Should()
-                    .BeSameAs(newBlock);
-
-                waitForBlockProcessedEvent.Set();
-                testee.Dispose();
-            };
-
-            testee.Run(currentBlock);
-
+            testee.Run();
             waitForBlockProcessedEvent.WaitOne();
+            testee.Dispose();
 
-            blockPersisterMock.Verify(x => x.Persist(newBlock));
+            blockPersisterMock.Verify(x => x.Persist(newBlock));    // TODO [AboimPinto]: This Verify should use the Time.Once, but, even disposing the class we get several runs on the loop before been canceled.
         }
 
         [TestMethod]
         public void Run_BlockInPoolIsNotTheNext_AsyncDelayerCalledToWaitToReceiveCorrectNextBlock()
         {
             var waitForDelayForToGetNextBlock = new AutoResetEvent(false);
-
-            var currentBlock = new Block
-            {
-                Index = 0
-            };
 
             Block nullBlock = null;
 
@@ -244,8 +238,8 @@ namespace NeoSharp.Core.Test.Blockchain.Processing
                 .Setup(x => x.Delay(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
                 .Callback(() => { waitForDelayForToGetNextBlock.Set(); })
                 .Returns(Task.Run(() => { }));
-            
-            testee.Run(currentBlock);
+
+            testee.Run();
             waitForDelayForToGetNextBlock.WaitOne();
             testee.Dispose();
 
@@ -273,12 +267,11 @@ namespace NeoSharp.Core.Test.Blockchain.Processing
 
             var testee = this.AutoMockContainer.Create<BlockProcessor>();
 
-            testee.Run(nullBlock);
+            testee.Run();
             waitForDelayForToGetNextBlock.WaitOne();
             testee.Dispose();
 
             blockPoolMock.Verify(x => x.TryGet(expectedIndexOfBlockToRetrieveFromBlockPool, out nullBlock));
-
         }
     }
 }

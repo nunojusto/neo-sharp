@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using NeoSharp.Core.Extensions;
-using NeoSharp.Core.Types;
 using NeoSharp.Persistence.RedisDB.Helpers;
+using NeoSharp.Types;
+using NeoSharp.Types.ExtensionMethods;
 using StackExchange.Redis;
 
 namespace NeoSharp.Persistence.RedisDB
@@ -42,6 +43,15 @@ namespace NeoSharp.Persistence.RedisDB
         public Task<RedisValue> Get(RedisKey key)
         {
             return _redisDb.HashGetAsync(key, "data");
+        }
+
+        public async Task<Dictionary<RedisKey, RedisValue>> GetMany(RedisKey[] keys)
+        {
+            var keyValueTasks = keys.ToDictionary(k => k, Get);
+
+            await Task.WhenAll(keyValueTasks.Values);
+
+            return keyValueTasks.ToDictionary(kv => kv.Key, kv => kv.Value.Result);
         }
 
         public Task<bool> AddToIndex(RedisIndex index, UInt256 hash, double indexScore)
