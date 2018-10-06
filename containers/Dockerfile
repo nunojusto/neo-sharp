@@ -5,7 +5,6 @@ FROM microsoft/dotnet:latest as builder
 # arguments to choose branch and source repo (defaults are development and CoZ/neo-sharp)
 ARG BRANCH="development"
 ARG SOURCE_REPO="https://github.com/CityOfZion/neo-sharp.git"
-ARG NEO-NETWORK="mainnet"
 
 # create folders structure and clone neo-sharp repo
 RUN mkdir /repo && \
@@ -25,6 +24,9 @@ RUN export arch=$(uname -m);if [ "$arch" = "armv7l" ]; then apt-get update && \
 ## Runtime stage
 # use official Microsoft dotnet container
 FROM microsoft/dotnet:2.1-runtime as runtime
+
+# arguments to choose what network to useb (defaults to mainnet)
+ARG NEO-NETWORK="mainnet"
 
 # install rocksdb dependencies and delete temp packages after to clean the most garbase possible
 RUN apt-get update && \
