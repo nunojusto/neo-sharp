@@ -38,7 +38,7 @@ RUN apt-get update && \
 COPY --from=builder /home/neo-sharp/* /home/neo-sharp/
 
 # Set 
-RUN cp /home/neo-sharp/appsettings.$NETWORK.json /home/neo-sharp/appsettings.json
+RUN cp /home/neo-sharp/appsettings.$NEO-NETWORK.json /home/neo-sharp/appsettings.json
 
 # workdir
 WORKDIR /home/neo-sharp
